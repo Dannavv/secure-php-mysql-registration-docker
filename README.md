@@ -13,25 +13,21 @@ This README focuses **only on implementation, setup, and execution**.
 
 ```text
 .
-├── architecture.png          # High-level architecture diagram
-├── docker-compose.yml        # Docker services definition
+├── architecture.png          # System architecture diagram
+├── docker-compose.yml        # Orchestration of PHP & MySQL services
 ├── mysql/
-│   └── init.sql              # Database schema initialization
+│   └── init.sql              # Database schema (includes app_logs fix)
 ├── php/
-│   ├── Dockerfile            # PHP + Apache image definition
-│   └── php.ini               # PHP runtime security configuration
-├── REPORT.md                 # Conceptual and theoretical report
-└── src/
-    ├── app.log               # Application log file (runtime)
-    ├── config.php            # Global configuration
-    ├── logger.php            # Centralized logging
-    ├── db.php                # Single database access function
-    ├── csrf.php              # CSRF protection utilities
-    ├── register.php          # User registration page
-    ├── test.php              # PHP sanity test
-    ├── test_logger.php       # Logger test
-    ├── test_db.php           # Database connectivity test
-    └── test_csrf.php         # CSRF token test
+│   ├── Dockerfile            # PHP 8.2 + Apache environment
+│   └── php.ini               # Hardened security configurations
+└── src/                      # Application Source
+    ├── config.php            # Security constants & Session handling
+    ├── db.php                # Database wrapper & connection object
+    ├── logger.php            # DB-backed audit logger (fixes 'function' keyword)
+    ├── csrf.php              # Anti-CSRF token utilities
+    ├── register.php          # Main registration interface & logic
+    ├── test_logger.php       # Verification utility for the logging system
+    └── ...                   # Additional connectivity tests
 
 ```
 
@@ -68,13 +64,11 @@ cd secure_registration
 Ensure correct permissions for runtime logging:
 
 ```bash
-sudo chown -R $USER:$USER src
-sudo chown 33:33 src/app.log
-sudo chmod 664 src/app.log
+sudo chown -R $USER:$USER src/
+sudo chmod -R 755 src/
 
 ```
 
-* **Explanation:** Source files are owned by the developer, while `app.log` must be writable by the Apache process (`www-data`, UID 33).
 
 ---
 
@@ -134,7 +128,23 @@ The `src/` directory includes specific scripts to verify the environment:
 | **csrf.php** | Token generation and validation for POST request security. |
 | **register.php** | Registration logic: Hashing (Bcrypt), XSS handling, and UI state control. |
 
+
+To view the internal application logs in real-time, use:
+
+```bash
+docker logs -f php_app
+
+```
+
 ---
+
+## 🛡️ Security Features
+
+* **Prepared Statements:** All database interactions in `db.php` use `mysqli_prepare` to eliminate SQL Injection risks.
+* **Bcrypt Hashing:** User passwords are encrypted using `PASSWORD_BCRYPT` with a default cost factor of 10.
+* **CSRF Protection:** Every POST request is validated against a unique, session-bound token to prevent Cross-Site Request Forgery.
+* **Centralized Logging:** System events, security warnings, and errors are captured in the `app_logs` table.
+* **Reserved Keyword Handling:** The logging system uses backticks (``function``) to support MySQL 8.0+ reserved word compatibility.
 
 ## Stopping the Application
 

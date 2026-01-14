@@ -1,57 +1,49 @@
 <?php
 require_once 'config.php';
-require_once 'logger.php';
+
+// Single global connection point
+$conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+if (!$conn) {
+    error_log("Database connection failed: " . mysqli_connect_error());
+    die("Internal Server Error: Database unavailable.");
+}
 
 /**
- * SINGLE database function for the entire project
- *
- * @param string $sql   SQL query with placeholders
- * @param string $types Bind param types (e.g. "sssi")
- * @param array  $params Values to bind
- *
- * @return mixed mysqli_result|bool
- * @throws Exception
+ * Executes a prepared statement safely
  */
-function db_query($sql, $types = "", $params = []) {
+function db_query(string $sql, string $types = "", array $params = [])
+{
+    global $conn;
 
     try {
-        // Connect to MySQL
-        $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-        if (!$conn) {
-            throw new Exception("Database connection failed");
-        }
-
-        // Prepare statement
-        $stmt = mysqli_prepare($conn, $sql);
+        $stmt = $conn->prepare($sql);
         if (!$stmt) {
-            throw new Exception("Query preparation failed");
+            throw new Exception('Prepare failed: ' . $conn->error);
         }
 
-        // Bind parameters if present
         if (!empty($params)) {
-            mysqli_stmt_bind_param($stmt, $types, ...$params);
+            $stmt->bind_param($types, ...$params);
         }
 
-        // Execute query
-        if (!mysqli_stmt_execute($stmt)) {
-            throw new Exception("Query execution failed");
+        if (!$stmt->execute()) {
+            throw new Exception('Execute failed: ' . $stmt->error);
         }
 
-        // Fetch result if SELECT, else return true
-        $result = mysqli_stmt_get_result($stmt);
+        $result = $stmt->get_result();
+        $stmt->close();
 
-        // Log successful query
-        log_activity("Query executed successfully", $sql);
+        // Log success (only for non-log queries to avoid infinite loops)
+        if (strpos($sql, 'INSERT INTO app_logs') === false) {
+            require_once 'logger.php';
+            log_activity($conn, 'INFO', 'Query executed', $sql);
+        }
 
-        return $result ?: true;
+        return $result !== false ? $result : true;
 
     } catch (Throwable $e) {
-
-        // Log full error internally
-        log_activity("DB ERROR: " . $e->getMessage(), $sql);
-
-        // Do NOT expose DB errors to user
-        throw new Exception("Database operation failed");
+        require_once 'logger.php';
+        log_activity($conn, 'ERROR', $e->getMessage(), $sql, $e->getTrace());
+        throw new Exception('Database operation failed.');
     }
 }

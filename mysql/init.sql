@@ -7,3 +7,21 @@ CREATE TABLE users (
     phone VARCHAR(15) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE app_logs (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    log_time DATETIME NOT NULL,
+    level ENUM('INFO', 'WARNING', 'ERROR', 'SECURITY') NOT NULL,
+    file VARCHAR(255) NOT NULL,
+    line INT NULL,
+    `function` VARCHAR(100) NULL, 
+    message TEXT NOT NULL,
+    query_text TEXT NULL,
+    trace JSON NULL,
+    ip_address VARCHAR(45) NULL,
+    user_agent TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_log_time (log_time),
+    INDEX idx_level (level),
+    INDEX idx_file (file)
+);

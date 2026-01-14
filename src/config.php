@@ -14,7 +14,7 @@ define('DB_PASS', 'StrongPassword@123');
 define('DB_NAME', 'secure_app');
 
 // Log file (inside container volume)
-define('LOG_FILE', __DIR__ . '/app.log');
+// define('LOG_FILE', __DIR__ . '/app.log');
 
 // Secure session settings
 ini_set('session.cookie_httponly', 1);
