@@ -113,8 +113,6 @@ The registration process follows a strict validation pipeline:
 
 ---
 
-## 7. Conclusion
-
-This project successfully implements a secure, scalable, and auditable registration system. By leveraging Docker and modern PHP security practices, the system remains resilient against common OWASP Top 10 vulnerabilities while providing a lightweight footprint suitable for production-like environments.
-
----
+```bash
+     sudo docker exec -it mysql_db mysql -u secure_user -p secure_app
+```
