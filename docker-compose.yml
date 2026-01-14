@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+  php:
+    build: ./php
+    container_name: php_app
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - mysql
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: secure_app
+      MYSQL_USER: secure_user
+      MYSQL_PASSWORD: StrongPassword@123
+    volumes:
+      - ./mysql:/docker-entrypoint-initdb.d
+
